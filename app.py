@@ -50,17 +50,19 @@ class DBComponent:
 class Todo:
     id: Optional[int] = Field(response_only=True)
     title: Optional[str]
-    completed: Optional[bool]
     order: Optional[int]
+    url: Optional[str] = Field(response_only=True)
+    completed: Optional[bool] = Field(default=False)
 
 
 class TodoManager:
     def __init__(self, db: DB) -> None:
         self.db = db
 
-    def _map_bool(self, data: sqlite3.Row):
+    def _map_todo(self, data: sqlite3.Row):
         data = dict(data)
         data['completed'] = False if data['completed'] == 0 else True
+        data['url'] = f"https://todo-molten.herokuapp.com/v1/todos/{data['id']}"
         return data
 
     def create(self, todo: Todo) -> Todo:
@@ -71,13 +73,12 @@ class TodoManager:
                 todo.order
             ])
 
-            todo.id = cursor.lastrowid
-            return todo
+            return self.get_by_id(cursor.lastrowid)
 
     def get_all(self) -> List[Todo]:
         with self.db.get_cursor() as cursor:
             cursor.execute("select rowid as id, title, completed, \"order\" from todos order by \"order\" desc")
-            return [Todo(**self._map_bool(data)) for data in cursor.fetchall()]
+            return [Todo(**self._map_todo(data)) for data in cursor.fetchall()]
 
     def get_by_id(self, todo_id: int) -> Optional[Todo]:
         with self.db.get_cursor() as cursor:
@@ -86,7 +87,7 @@ class TodoManager:
             if data is None:
                 return None
 
-            return Todo(**self._map_bool(data))
+            return Todo(**self._map_todo(data))
 
     def update_by_id(self, todo_id: int, updates: Todo) -> Optional[Todo]:
         todo = self.get_by_id(todo_id)
