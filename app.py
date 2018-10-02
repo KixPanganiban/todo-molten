@@ -105,6 +105,10 @@ class TodoManager:
         with self.db.get_cursor() as cursor:
             cursor.execute("delete from todos where rowid = ?", [todo_id])
 
+    def delete_all(self) -> None:
+        with self.db.get_cursor() as cursor:
+            cursor.execute("delete from todos")
+
 
 class TodoManagerComponent:
     is_cacheable = True
@@ -140,9 +144,12 @@ def update_todo(todo_id: str, todo: Todo, manager: TodoManager) -> Todo:
         raise HTTPError(HTTP_404, {"error": f"todo {todo_id} not found"})
     return todo
 
-
 def delete_todo(todo_id: str, manager: TodoManager) -> Tuple[str, None]:
     manager.delete_by_id(int(todo_id))
+    return HTTP_204, None
+
+def delete_all(manager: TodoManager) -> Tuple[str, None]:
+    manager.delete_all()
     return HTTP_204, None
 
 class CORSMiddleware:
@@ -176,6 +183,7 @@ routes: List[Union[Route, Include]] = [
         Route("/", options_todos, method="OPTIONS"),
         Route("/", list_todos),
         Route("/", create_todo, method="POST"),
+        Route("/", delete_all, method="DELETE"),
         Route("/{todo_id}", get_todo),
         Route("/{todo_id}", delete_todo, method="DELETE"),
         Route("/{todo_id}", update_todo, method="PATCH")
