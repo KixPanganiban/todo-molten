@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from contextlib import contextmanager
 from inspect import Parameter
@@ -5,10 +6,11 @@ from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 from molten import (
     HTTP_201, HTTP_204, HTTP_403, HTTP_404, App, Component, Field, Header, HTTPError, Include,
-    Middleware, Request, Response, ResponseRendererMiddleware, Route, schema
+    Middleware, Request, Response, ResponseRenderer, ResponseRendererMiddleware, Route, schema
 )
 from molten.app import BaseApp
 from molten.http.headers import HeadersDict
+from molten.renderers import JSONRenderer
 
 
 class DB:
@@ -153,6 +155,9 @@ def delete_all(manager: TodoManager) -> Tuple[str, None]:
     return HTTP_204, None
 
 class CORSMiddleware:
+    """Middleware to inject CORS headers.
+    """
+
     def __call__(self, handler: Callable[..., Any]) -> Callable[..., Response]:
         def handle(app: BaseApp, request: Request) -> Response:
             headers: HeadersDict = {
@@ -164,6 +169,20 @@ class CORSMiddleware:
             return response
         return handle
 
+class PlainTextRenderer(JSONRenderer):
+    """A plaintext response renderer.
+    """
+
+    mime_type = "text/plaint"
+
+    def can_render_response(self, accept: str) -> bool:
+        return accept.startswith("text/plain")
+
+    def render(self, status: str, response_data: Any) -> Response:
+        content = json.dumps(response_data, default=self.default)
+        return Response(status, content=content, headers={
+            "content-type": "text/plain",
+        })
 
 
 components: List[Component] = [
@@ -175,6 +194,11 @@ components: List[Component] = [
 middleware: List[Middleware] = [
     CORSMiddleware(),
     ResponseRendererMiddleware()
+]
+
+renderers: List[ResponseRenderer] = [
+    JSONRenderer(),
+    PlainTextRenderer()
 ]
 
 
@@ -193,5 +217,6 @@ routes: List[Union[Route, Include]] = [
 app = App(
     components=components,
     middleware=middleware,
+    renderers=renderers,
     routes=routes,
 )
