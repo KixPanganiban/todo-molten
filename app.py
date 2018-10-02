@@ -5,8 +5,10 @@ from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 from molten import (
     HTTP_201, HTTP_204, HTTP_403, HTTP_404, App, Component, Field, Header, HTTPError, Include,
-    Middleware, Request, ResponseRendererMiddleware, Route, schema
+    Middleware, Request, Response, ResponseRendererMiddleware, Route, schema
 )
+from molten.app import BaseApp
+from molten.http.headers import HeadersDict
 
 
 class DB:
@@ -114,6 +116,9 @@ class TodoManagerComponent:
     def resolve(self, db: DB) -> TodoManager:
         return TodoManager(db)
 
+def options_todos() -> str:
+    return "ok"
+
 
 def list_todos(manager: TodoManager) -> List[Todo]:
     return manager.get_all()
@@ -140,6 +145,19 @@ def delete_todo(todo_id: str, manager: TodoManager) -> Tuple[str, None]:
     manager.delete_by_id(int(todo_id))
     return HTTP_204, None
 
+class CORSMiddleware:
+    def __call__(self, handler: Callable[..., Any]) -> Callable[..., Response]:
+        def handle(app: BaseApp, request: Request) -> Response:
+            headers: HeadersDict = {
+                'access-control-allow-origin': '*',
+                'access-control-allow-headers': '*'
+            }
+            response = handler()
+            response.headers.add_all(headers)
+            return response
+        return handle
+
+
 
 components: List[Component] = [
     DBComponent(),
@@ -148,12 +166,14 @@ components: List[Component] = [
 
 
 middleware: List[Middleware] = [
-    ResponseRendererMiddleware(),
+    CORSMiddleware(),
+    ResponseRendererMiddleware()
 ]
 
 
 routes: List[Union[Route, Include]] = [
     Include("/v1/todos", [
+        Route("/", options_todos, method="OPTIONS"),
         Route("/", list_todos),
         Route("/", create_todo, method="POST"),
         Route("/{todo_id}", get_todo),
