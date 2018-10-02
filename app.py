@@ -152,7 +152,7 @@ def delete_todo(todo_id: str, manager: TodoManager) -> Tuple[str, None]:
 
 def delete_all(manager: TodoManager) -> Tuple[str, None]:
     manager.delete_all()
-    return HTTP_204, None
+    return []
 
 class CORSMiddleware:
     """Middleware to inject CORS headers.
