@@ -15,7 +15,7 @@ from molten.renderers import JSONRenderer
 
 class DB:
     def __init__(self) -> None:
-        self._db = sqlite3.connect(":memory:")
+        self._db = sqlite3.connect("molten.db")
         self._db.row_factory = sqlite3.Row
 
         with self.get_cursor() as cursor:
