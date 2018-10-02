@@ -123,12 +123,17 @@ class TodoManagerComponent:
     def resolve(self, db: DB) -> TodoManager:
         return TodoManager(db)
 
+
 def options_todos() -> str:
-    return "ok"
+    return HTTP_204, None
 
 
 def list_todos(manager: TodoManager) -> List[Todo]:
     return manager.get_all()
+
+
+def options_todo(todo_id: str) -> str:
+    return HTTP_204, None
 
 
 def get_todo(todo_id: str, manager: TodoManager) -> Todo:
@@ -141,11 +146,13 @@ def get_todo(todo_id: str, manager: TodoManager) -> Todo:
 def create_todo(todo: Todo, manager: TodoManager) -> Tuple[str, Todo]:
     return HTTP_201, manager.create(todo)
 
+
 def update_todo(todo_id: str, todo: Todo, manager: TodoManager) -> Todo:
     todo = manager.update_by_id(todo_id, todo)
     if todo is None:
         raise HTTPError(HTTP_404, {"error": f"todo {todo_id} not found"})
     return todo
+
 
 def delete_todo(todo_id: str, manager: TodoManager) -> Tuple[str, None]:
     manager.delete_by_id(int(todo_id))
@@ -210,6 +217,7 @@ routes: List[Union[Route, Include]] = [
         Route("/", list_todos),
         Route("/", create_todo, method="POST"),
         Route("/", delete_all, method="DELETE"),
+        Route("/{todo_id}", options_todo, method="OPTIONS"),
         Route("/{todo_id}", get_todo),
         Route("/{todo_id}", delete_todo, method="DELETE"),
         Route("/{todo_id}", update_todo, method="PATCH")
