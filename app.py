@@ -162,7 +162,8 @@ class CORSMiddleware:
         def handle(app: BaseApp, request: Request) -> Response:
             headers: HeadersDict = {
                 'access-control-allow-origin': '*',
-                'access-control-allow-headers': '*'
+                'access-control-allow-headers': 'Accept, Content-Type',
+                'access-control-allow-methods': '*'
             }
             response = handler()
             response.headers.add_all(headers)
