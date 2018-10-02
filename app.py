@@ -74,7 +74,7 @@ class TodoManager:
 
     def get_all(self) -> List[Todo]:
         with self.db.get_cursor() as cursor:
-            cursor.execute("select rowid as id, title, completed, order from todos order by order desc")
+            cursor.execute("select rowid as id, title, completed, \"order\" from todos order by \"order\" desc")
             return [Todo(**self._map_bool(data)) for data in cursor.fetchall()]
 
     def get_by_id(self, todo_id: int) -> Optional[Todo]:
