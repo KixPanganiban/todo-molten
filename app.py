@@ -19,7 +19,7 @@ class DB:
         self._db.row_factory = sqlite3.Row
 
         with self.get_cursor() as cursor:
-            cursor.execute("create table todos(title text, completed bool, \"order\" int)")
+            cursor.execute("create table if not exists todos(title text, completed bool, \"order\" int)")
 
     @contextmanager
     def get_cursor(self) -> Iterator[sqlite3.Cursor]:
